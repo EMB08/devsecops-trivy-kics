@@ -1,0 +1,25 @@
+services:
+  juice-shop:
+    image: bkimminich/juice-shop:latest
+    container_name: devsecops-juice-shop
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  trivy:
+    image: aquasec/trivy:latest
+    container_name: devsecops-trivy
+    volumes:
+      - ./reports:/reports
+    entrypoint: ["trivy"]
+    profiles:
+      - tools
+
+  kics:
+    image: checkmarx/kics:latest
+    container_name: devsecops-kics
+    volumes:
+      - ./terragoat:/path:ro
+      - ./reports:/reports
+    profiles:
+      - tools
