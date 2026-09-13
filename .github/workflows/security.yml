@@ -13,8 +13,9 @@ on:
           - secure
 
 jobs:
-  security-scan:
-    name: Security Scan - ${{ inputs.target }}
+  trivy-vulnerable:
+    name: Trivy - Vulnerable Target
+    if: inputs.target == 'vulnerable'
     runs-on: ubuntu-latest
 
     steps:
@@ -22,20 +23,27 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Pull Juice Shop image
-        if: inputs.target == 'vulnerable'
         run: docker pull bkimminich/juice-shop:latest
 
-      - name: Run Trivy - Vulnerable Target
-        if: inputs.target == 'vulnerable'
+      - name: Run Trivy
         run: |
           docker run --rm \
             aquasec/trivy:latest image \
+            --scanners vuln \
             --severity HIGH,CRITICAL \
             --exit-code 1 \
             bkimminich/juice-shop:latest
 
-      - name: Run KICS - Vulnerable Target
-        if: inputs.target == 'vulnerable'
+  kics-vulnerable:
+    name: KICS - Vulnerable Target
+    if: inputs.target == 'vulnerable'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run KICS
         run: |
           docker run --rm \
             -v "${{ github.workspace }}/terragoat:/path:ro" \
@@ -43,12 +51,19 @@ jobs:
             -p /path/terraform/aws \
             --fail-on HIGH,CRITICAL
 
-      - name: Build secure Trivy target
-        if: inputs.target == 'secure'
+  trivy-secure:
+    name: Trivy - Secure Target
+    if: inputs.target == 'secure'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build secure target
         run: docker build -t devsecops-secure:latest secure-fixture
 
-      - name: Run Trivy - Secure Target
-        if: inputs.target == 'secure'
+      - name: Run Trivy
         run: |
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
@@ -58,8 +73,16 @@ jobs:
             --exit-code 1 \
             devsecops-secure:latest
 
-      - name: Run KICS - Secure Target
-        if: inputs.target == 'secure'
+  kics-secure:
+    name: KICS - Secure Target
+    if: inputs.target == 'secure'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run KICS
         run: |
           docker run --rm \
             -v "${{ github.workspace }}/secure-fixture:/path:ro" \
