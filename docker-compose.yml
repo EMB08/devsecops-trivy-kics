@@ -20,6 +20,7 @@ services:
     container_name: devsecops-kics
     volumes:
       - ./terragoat:/path:ro
+      - ./secure-fixture:/secure-fixture:ro
       - ./reports:/reports
     profiles:
       - tools
